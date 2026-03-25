@@ -24,11 +24,16 @@ from dbt.contracts.graph.manifest import Manifest
 from dbt.parser.manifest import ManifestLoader
 from dbt_common.events.functions import fire_event
 
-from .config import ADAPTER_NAME, DbInfo, DeppCredentials, DeppCredentialsWrapper, ModelConfig
+from .config import (
+    ADAPTER_NAME,
+    DbInfo,
+    DeppCredentials,
+    DeppCredentialsWrapper,
+    ModelConfig,
+)
 from .executors import Executor
 from .utils.ast_utils import extract_python_docstring
 from .utils.general import find_funcs_in_stack, release_plugin_lock
-
 
 type FuncT[T, **P] = Callable[Concatenate[T, P], AdapterResponse]
 
@@ -142,6 +147,11 @@ class DeppAdapter(metaclass=AdapterMeta):
         return Executor.create(library, self.db_creds.type, self.db_creds)
 
     @available
+    def db_type(self) -> str:
+        """Return the underlying database adapter type."""
+        return self._db_adapter.type()
+
+    @available
     def db_materialization(self, context: dict[str, Any], materialization: str) -> Any:
         """Execute database materialization macro."""
         macro = self.manifest.find_materialization_macro_by_name(
@@ -227,8 +237,10 @@ class DeppAdapter(metaclass=AdapterMeta):
                 getattr(node, "language", None) == ModelLanguage.python
                 and node.resource_type.value == "model"
                 and not (node.description or "").strip()
-                and (docstring := extract_python_docstring(
-                    str(project_root / node.original_file_path)
-                ))
+                and (
+                    docstring := extract_python_docstring(
+                        str(project_root / node.original_file_path)
+                    )
+                )
             ):
                 node.description = docstring
