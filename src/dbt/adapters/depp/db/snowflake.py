@@ -113,16 +113,20 @@ class SnowflakeOps:
             with self.get_connection(creds, schema) as conn:
                 cur = conn.cursor()
                 stage = f"{s}.depp_tmp_stage"
+                fmt = f"{s}.depp_tmp_parquet_format"
+                cur.execute(
+                    f"CREATE OR REPLACE TEMPORARY FILE FORMAT {fmt} TYPE=PARQUET"
+                )
                 cur.execute(
                     f"CREATE OR REPLACE TEMPORARY STAGE {stage}"
-                    " FILE_FORMAT=(TYPE=PARQUET)"
+                    f" FILE_FORMAT={fmt}"
                 )
                 cur.execute(f"PUT 'file://{path}' @{stage} AUTO_COMPRESS=FALSE OVERWRITE=TRUE")
                 cur.execute(
                     f"CREATE OR REPLACE TABLE {s}.{t}"
                     f" USING TEMPLATE (SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*))"
                     f" FROM TABLE(INFER_SCHEMA(LOCATION => '@{stage}',"
-                    " FILE_FORMAT => '(TYPE=PARQUET)')))"
+                    f" FILE_FORMAT => '{fmt}')))"
                 )
                 cur.execute(
                     f"COPY INTO {s}.{t} FROM @{stage}"
