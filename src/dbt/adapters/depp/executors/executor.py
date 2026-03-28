@@ -2,11 +2,13 @@ import time
 from dataclasses import dataclass
 from typing import Any, ClassVar
 
+import pandas as pd
+import polars as pl
 from dbt.adapters.contracts.connection import Credentials
 
 from dbt.adapters.depp.db import get_db_ops
 
-from .protocols import Converter, DbContext, ReadOptions, Reader, SourceInfo, Writer
+from .protocols import Converter, DbContext, Reader, ReadOptions, SourceInfo, Writer
 from .result import ExecutionResult
 
 
@@ -47,9 +49,7 @@ class Executor:
             cls.type_mapping[t] = library
 
     @classmethod
-    def create(
-        cls, library: str, db_type: str, creds: Credentials
-    ) -> "Executor":
+    def create(cls, library: str, db_type: str, creds: Credentials) -> "Executor":
         """Create an executor from the registry."""
         key = (library, db_type)
         if key not in cls.registry:
@@ -66,6 +66,8 @@ class Executor:
         *,
         partition_on: str | None = None,
         partition_num: int | None = None,
+        lowercase: bool = True,
+        lazy: bool = False,
     ) -> Any:
         """Read a table into a DataFrame via reader and converter."""
         source = SourceInfo.parse(table_name)
@@ -73,7 +75,12 @@ class Executor:
         start = time.perf_counter()
         arrow = self.reader.read_arrow(self.ctx, source, options)
         self.read_time += time.perf_counter() - start
-        return self.converter.from_arrow(arrow)
+        df = self.converter.from_arrow(arrow)
+        if lowercase and isinstance(df, pl.DataFrame):
+            df = df.rename(str.lower)
+        elif lowercase and isinstance(df, pd.DataFrame):
+            df = df.rename(columns=str.lower)
+        return df.lazy() if lazy and isinstance(df, pl.DataFrame) else df
 
     def write_df(self, table_name: str, df: Any) -> ExecutionResult:
         """Write a DataFrame to a table via writer."""

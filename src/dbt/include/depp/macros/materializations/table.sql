@@ -71,18 +71,20 @@ _depp_ref = ref
 def ref(*args, **kwargs):
   _pn = kwargs.pop("partition_on", None)
   _pnum = kwargs.pop("partition_num", None)
+  _lc = kwargs.pop("lowercase", True)
+  _lazy = kwargs.pop("lazy", False)
   _load = kwargs.get("dbt_load_df_function")
-  if _load and (_pn is not None or _pnum is not None):
-    kwargs["dbt_load_df_function"] = lambda t: _load(t, partition_on=_pn, partition_num=_pnum)
+  if _load:
+    kwargs["dbt_load_df_function"] = lambda t: _load(t, partition_on=_pn, partition_num=_pnum, lowercase=_lc, lazy=_lazy)
   return _depp_ref(*args, **kwargs)
 
 _depp_source = source
 def source(*args, dbt_load_df_function, **kwargs):
   _pn = kwargs.pop("partition_on", None)
   _pnum = kwargs.pop("partition_num", None)
-  _load = dbt_load_df_function
-  if _pn is not None or _pnum is not None:
-    _load = lambda t: dbt_load_df_function(t, partition_on=_pn, partition_num=_pnum)
+  _lc = kwargs.pop("lowercase", True)
+  _lazy = kwargs.pop("lazy", False)
+  _load = lambda t: dbt_load_df_function(t, partition_on=_pn, partition_num=_pnum, lowercase=_lc, lazy=_lazy)
   return _depp_source(*args, dbt_load_df_function=_load)
 
 _DbtObj = dbtObj
