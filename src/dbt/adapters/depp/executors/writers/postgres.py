@@ -42,9 +42,9 @@ class PostgresWriter:
             creds = cast(PostgresCredentials, ctx.creds)
             engine = create_engine(ops.sqlalchemy_url(creds))
             with engine.begin() as db_conn:
-                for col, is_int in array_cols.items():
+                for col, kind in array_cols.items():
                     sql = ops.post_write_sql(
-                        source.schema, source.table, col, ops.array_type(is_int)
+                        source.schema, source.table, col, ops.array_type(kind)
                     )
                     db_conn.exec_driver_sql(sql)
         return ExecutionResult(

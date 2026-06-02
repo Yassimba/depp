@@ -6,6 +6,7 @@ import polars as pl
 from dbt.adapters.contracts.connection import Credentials
 
 from dbt.adapters.depp.db import DatabaseOps
+from dbt.adapters.depp.db.base import ArrayKind
 
 from .result import ExecutionResult
 
@@ -65,7 +66,7 @@ class Converter[T](Protocol):
 
     def prepare_array_columns(
         self, df: T, db_ops: DatabaseOps
-    ) -> tuple[T, dict[str, bool]]: ...
+    ) -> tuple[T, dict[str, ArrayKind]]: ...
 
     def to_arrow(self, df: T) -> Any: ...
     def to_polars(self, df: T) -> pl.DataFrame: ...

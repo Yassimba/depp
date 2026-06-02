@@ -8,7 +8,7 @@ import connectorx as cx
 import pandas as pd
 from dbt.adapters.postgres.connections import PostgresCredentials
 
-from .base import DEFAULT_SRID
+from .base import DEFAULT_SRID, ArrayKind
 
 
 class PostgresOps:
@@ -77,9 +77,13 @@ class PostgresOps:
         """Format array values for PostgreSQL."""
         return "{" + ",".join(str(x) for x in values) + "}"
 
-    def array_type(self, is_integer: bool) -> str:
-        """Return PostgreSQL array type."""
-        return "INTEGER[]" if is_integer else "TEXT[]"
+    def array_type(self, kind: ArrayKind) -> str:
+        """Return PostgreSQL array type for an ArrayKind."""
+        return {
+            ArrayKind.INT: "INTEGER[]",
+            ArrayKind.BIGINT: "BIGINT[]",
+            ArrayKind.TEXT: "TEXT[]",
+        }[kind]
 
     def post_write_sql(self, schema: str, table: str, col: str, dtype: str) -> str:
         """Return ALTER TABLE SQL to cast a column type."""

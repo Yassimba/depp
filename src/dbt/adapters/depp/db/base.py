@@ -1,8 +1,17 @@
+from enum import StrEnum
 from typing import Any, Protocol
 
 from dbt.adapters.contracts.connection import Credentials
 
 DEFAULT_SRID = 28992  # Dutch RD (Rijksdriehoeksmeting) coordinate system
+
+
+class ArrayKind(StrEnum):
+    """SQL array element kind inferred from a DataFrame list column."""
+
+    INT = "int"
+    BIGINT = "bigint"
+    TEXT = "text"
 
 
 class DatabaseOps(Protocol):
