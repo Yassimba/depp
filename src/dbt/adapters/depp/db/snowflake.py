@@ -114,8 +114,14 @@ class SnowflakeOps:
                 cur = conn.cursor()
                 stage = f"{s}.depp_tmp_stage"
                 fmt = f"{s}.depp_tmp_parquet_format"
+                # USE_LOGICAL_TYPE=TRUE makes Snowflake honour Parquet logical-type
+                # annotations: a TIMESTAMP(MICROS) column infers as TIMESTAMP_NTZ
+                # rather than its physical int64 (NUMBER). Without it, every
+                # datetime written by a python model lands as epoch-microsecond
+                # NUMBER. SQL models avoid this (CTAS preserves native types).
                 cur.execute(
-                    f"CREATE OR REPLACE TEMPORARY FILE FORMAT {fmt} TYPE=PARQUET"
+                    f"CREATE OR REPLACE TEMPORARY FILE FORMAT {fmt}"
+                    " TYPE=PARQUET USE_LOGICAL_TYPE=TRUE"
                 )
                 cur.execute(
                     f"CREATE OR REPLACE TEMPORARY STAGE {stage}"
